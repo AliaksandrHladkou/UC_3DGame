@@ -1,0 +1,146 @@
+{
+    "name":"testscene",
+    "materials":{
+        "green":{
+            "ka":[0.05, 0.05, 0.05],
+            "kd":[0.0, 1.0, 0.0],
+            "ks":[0.8, 0.0, 0.0]
+        },
+        "red":{
+            "kd":[1.0, 0.0, 0.0]
+        }
+    },
+
+    "lights":[
+        {
+            "pos":[0, 2, 0],
+            "color":[1, 1, 1]
+        }
+    ],
+    
+    "cameras":[
+        {
+            "pos": [0.00, 1.50, 5.00],
+            "rot": [0.00, 0.00, 0.00, 1.00],
+            "fovy": 1.0
+        },
+        {
+            "pos": [0.00, 1.50, -5.00],
+            "rot": [0.00, 1.00, 0.00, 0.00],
+            "fovy": 1.0
+        }
+    ],
+    
+    "children":[
+        {
+            "transform":[1, 0, 0, 0,
+                         0, 1, 0, 0.5,
+                         0, 0, 1, 0,
+                         0, 0, 0, 1],
+            "shapes":[
+                {
+                "type":"box",
+                "length":1,
+                "width":1,
+                "height":1,
+                "center":[0, 0, 0],
+                "material":"green"
+                }
+            ],
+            "children":[
+                { 
+                    "transform":[0.707, 0, 0.707, 2,
+                        0, 1, 0, 0,
+                        -0.707, 0, 0.707, 0,
+                        0, 0, 0, 1],
+                    "children":[
+                        {
+                            "transform":[2, 0, 0, 0,
+                                        0, 1, 0, 0,
+                                        0, 0, 1, 0,
+                                        0, 0, 0, 1],
+                            "shapes":[
+                                {
+                                "type":"box",
+                                "length":1,
+                                "width":1,
+                                "height":1,
+                                "center":[0, 0, 0]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+
+        {
+            "transform":[20, 0, 0, 0,
+                        0, 20, 0, 0,
+                        0, 0, 20, 0,
+                        0, 0, 0, 1],
+            "shapes":[
+                {
+                "type":"mesh",
+                "filename":"../meshes/square.off",
+                "material":"green"
+                }
+            ]
+        },
+
+        {
+            "transform":[2, 0, 0, 0,
+                         0, 1, 0, 0,
+                         0, 0, 1, 0,
+                         0, 0, 0, 1],
+            "shapes":[
+                {
+                    "type":"sphere",
+                    "radius":0.5,
+                    "center":[0, 0, -10],
+                    "material":"green"
+                }
+            ]
+        },
+
+        {
+            "shapes":[
+                {
+                    "type":"sphere",
+                    "radius":2,
+                    "center":[5, 0, -10],
+                    "material":"green"
+                },
+                {
+                    "type":"cylinder",
+                    "radius":1,
+                    "height":3,
+                    "center":[-4, 0, 0],
+                    "material":"red"
+                },
+                {
+                    "type":"cone",
+                    "radius":1,
+                    "height":2,
+                    "center":[-4, 0, -4],
+                    "material":"red" 
+                }
+            ]   
+        },
+
+        {
+            "transform":[
+                0.001, 0, 0, 0,
+                0, 0.001, 0, 0,
+                0, 0, 0.001, 0,
+                0, 0, 0, 1],
+            "shapes":[
+                {
+                    "type":"mesh",
+                    "filename":"../meshes/proftralie.off"
+                }
+
+            ]
+        }
+    ]
+}

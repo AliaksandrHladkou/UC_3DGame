@@ -1,0 +1,139 @@
+<html>
+
+<head>
+<link rel="shortcut icon" href="#">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!--External Libraries!-->
+<!--<script type="text/javascript" src="js/gl-matrix.js"></script>!-->
+<script type="text/javascript" src = "ggslac/jslibs/dat.gui.min.js"></script>
+<script type="text/javascript" src = "ggslac/jslibs/gl-matrix-min.js"></script>
+<script type="text/javascript" src="ggslac/jslibs/webgl-utils.js"></script>
+<script type="text/javascript" src="ggslac/jslibs/webgl-debug.js"></script>
+<script type="text/javascript" src="ammo.js"></script>
+
+
+<!--Our Scripts!-->
+<script src="ggslac/geometry/polymesh.js"></script>
+<script src="ggslac/geometry/basicmesh.js"></script>
+<script src="ggslac/geometry/primitives3d.js"></script>
+<script src="ggslac/geometry/cameras3d.js"></script>
+<script src="ggslac/shaders/shaders.js"></script>
+<script src="ggslac/utils/simpledraw.js"></script>
+<script src="ggslac/utils/blockloader.js"></script>
+<script src="ggslac/viewers/basecanvas.js"></script>
+<script src="ggslac/viewers/scenecanvas.js"></script>
+
+<script src="Particles3D.js"></script>
+
+<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<body>
+
+<table><tr><td>
+<canvas id="GLCanvas1" style="border: none;" width="1100" height="670"></canvas>
+
+</td>
+</tr>
+<tr>
+    <td>
+        <table cellpadding>
+            <tr>
+                <td>
+                    <h3>Controls</h3>
+                    <ul>
+                        <li><b>Mouse</b>: Click and drag to look around</li>
+                        <li><b>W:</b> Forward</li>
+                        <li><b>S:</b> Backwards</li>
+                        <li><b>A:</b> Left</li>
+                        <li><b>D:</b> Right</li>
+                        <li><b>E:</b> Up</li>
+                        <li><b>C:</b> Down</li>
+                    </ul>
+                </td>
+            </tr>
+        </table>
+    </td>
+</tr>
+</table>
+
+
+<script>
+    let glcanvas = document.getElementById("GLCanvas1");
+    glcanvas.addEventListener("contextmenu", function(e){ e.stopPropagation(); e.preventDefault(); return false; }); //Need this to disable the menu that pops up on right clicking
+    SceneCanvas(glcanvas, "ggslac/shaders/", "ggslac/meshes/");
+    glcanvas.repaintOnInteract = false;
+
+
+    // Load the sample scene as a default
+    particles = new Particles();
+    //particles.randomlyInitSpheres(50);
+    particles.randomlyInitBoxes(50);
+
+    //scene floor and walls
+    particles.addBox([0, 0, 0], [100, 1, 100], [0, 0, 0], 0, 0.9, "ground");
+    particles.addBox([0, 3, -50], [100, 6, 1], [0, 0, 0], 0, 0.2, "unique");
+    particles.addBox([0, 3, 50], [100, 6, 1], [0, 0, 0], 0, 0.2, "unique");
+    particles.addBox([50, 3, 0], [1, 6, 100], [0, 0, 0], 0, 0.2, "newunique");
+    particles.addBox([-50, 3, 0], [1, 6, 100], [0, 0, 0], 0, 0.2, "newunique");
+
+    //unmovable objects
+    let q = quat.create();
+    q = quat.setAxisAngle(q, [1, 0 ,0], 0.78);
+    q = quat.fromEuler(q, 45, 0, 0);
+    // q = quat.rotateX(q, q, 0.78);
+    // q = quat.rotateY(q, q, 0.78);
+    //console.log(q);
+    //particles.addBox([2, 1, 0], [2, 2, 0], [0, 0, 0], 0, 0.2, "blueambient", q);
+
+    //one global light
+    particles.addSphere([0, 20, 0], 1.0, [0, 0, 0], 0.0, 0.0, "white", true);
+
+    //add house
+    let q1 = quat.create();
+    //q1 = quat.setAxisAngle(q1, [0, 1 ,0], 0.78);
+    q1 = quat.fromEuler(q1, 0, 90, 90);
+    particles.hom = particles.addMesh("ggslac/MBHouse.off", [30, 0.5, 0], [0.03, 0.03, 0.03], [0, 0, 0], 0, 0, "green", false, false, q1);
+
+    let q2 = quat.create();
+    q2 = quat.fromEuler(q2, 0, 270, 0);
+    particles.hom = particles.addMesh("ggslac/MedHouse.off", [30, 0.5, 30], [0.03, 0.03, 0.03], [0, 0, 0], 0, 0, "green", false, false, q2);
+
+    let rotat3 = quat.create();
+    rotat3 = quat.fromEuler(rotat3, 0, -45, 0);
+    particles.hom = particles.addMesh("ggslac/housemed.off", [30, 8, -25], [1, 1, 1], [0, 0, 0], 0, 0, "green", false, false, rotat3);
+
+    particles.container = particles.addMesh("ggslac/container.off", [30, 0.5, 20], [0.5, 0.5, 0.5], [0, 0, 0], 0, 0, "green", false, false, rotat3);
+    particles.gun = particles.addMesh("ggslac/SuomiKP31.off", [4, 2, -35], [2, 2, 2], [0, 0, 0], 0, 0, "gun", false, false, rotat3);
+    particles.gun = particles.addMesh("ggslac/gun2.off", [0, 2, -35], [0.2, 0.2, 0.2], [0, 0, 0], 0, 0, "gun", false, false, rotat3);
+    particles.gun = particles.addMesh("ggslac/M16.off", [0, 1.5, -30], [0.02, 0.02, 0.02], [0, 0, 0], 0, 0, "gun", false, false, rotat3);
+    particles.gun = particles.addMesh("ggslac/Bullet.off", [3, 2, -35.5], [2, 2, 2], [0, 0, 0], 0, 0, "white", false, false, rotat3);
+
+    //particles.knife = particles.addMesh("ggslac/knife.off", [1, 2, 5], [0.5, 0.5, 0.5], [0, 0, 0], 0, 0, "green", false, false, rotat3);
+
+    //particles.car = particles.addMesh("ggslac/meshes/dwlded/DeLorean.off", [2, 10, 2], [1, 1, 1], [0, 0, 0], 0, 0, "green");
+
+
+    //particles.cow = particles.addMesh("ggslac/meshes/box.off", [0, 1, 0], [0, 0, 0], 10, 1, "green");
+    particles.cow = particles.addMesh("ggslac/meshes/icosahedron.off", [0, 1, 0], [1, 1, 1], [0, 0, 0], 10, 1, "white");
+
+    glcanvas.setupScene(particles.scene, glcanvas.clientWidth, glcanvas.clientHeight);
+    glcanvas.drawEdges = false;
+    glcanvas.updateMeshDrawings();
+    particles.setglcanvas(glcanvas);
+    particles.setupListeners();
+
+    function repaint() {
+        particles.animate();
+        glcanvas.repaint();
+        requestAnimationFrame(repaint);
+        
+    }
+
+    requestAnimFrame(repaint);
+    
+    
+</script>
+
+</body>
+</html>
