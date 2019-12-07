@@ -87,75 +87,13 @@ function Particles() {
                     "gun":{
                         "ka":[0.1, 0.1, 0.1],
                         "kd":[0.5, 0.7, 0.9]
+                    },
+                    "goldish":{
+                        //"ka":[1.0, 1.0, 0.75],
+                        "ka":[0.4, 0.3, 0.0]
                     }
                 }          
     };
-
-    // this.scene = {"children":[],
-    // "materials":{
-    //     "redambient":{
-    //         "ka":[0.7, 0.0, 0.0],
-    //         "kd":[1, 1, 1]
-    //     },
-    //     "blueambient":{
-    //         "ka":[0.0, 0.0, 0.7],
-    //         "kd":[1, 1, 1]
-    //     },
-    //     "green":{
-    //         "kd":[0.0, 0.7, 0.0]
-    //     },
-    //     "white":{
-    //         "ka":[1, 1, 1],
-    //         "kd":[1, 1, 1]
-    //     },
-    //     "ground":{
-    //         "ka":[0.1, 0.1, 0.1]
-    //     },
-    // },
-
-    // "lights":[
-    //     {
-    //         "pos":[0, 5, 0],
-    //         "color":[1, 1, 1]
-    //     }
-    // ],
-    
-    // "cameras":[
-    //     {
-    //         "pos": [0.00, 1.50, 5.00],
-    //         "rot": [0.00, 0.00, 0.00, 1.00],
-    //         "fovy": 1.0
-    //     }
-    // ]
-
-    // "children": [
-    //         {
-    //           "transform": [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
-    //           "shapes": [
-    //             {
-    //               "type": "scene",
-    //               "filename": "../ggslac/scenes/boxes.json",
-    //               "material": "green"
-    //             }
-    //           ]
-    //         }
-    //     ]
-        // "children": [
-        //     {
-        //         "transform": [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
-        //         "shapes": [
-        //             {
-        //             "type": "box",
-        //             "length": 1,
-        //             "width": 1,
-        //             "height": 1,
-        //             "center": [0, 0, 0]
-        //             }
-        //         ],
-        //     }
-        // ],
-
-    //};
 
     this.glcanvas = null;
     this.setglcanvas = function(glcanvas) {
@@ -215,7 +153,9 @@ function Particles() {
                 {
                 "type":"box",
                 "material":material,
-                "hidden":isHidden}
+                "hidden":isHidden
+                //"filename": "../ggslac/scenes/boxes.json"
+                }
                 // "type": "scene",
                 // "filename": "../ggslac/scenes/boxes.json",
                 // "material": material,
@@ -370,14 +310,26 @@ function Particles() {
      * @param {float} restitution Coefficient of restitution (between 0 and 1)
      * @param {string} material Material to use
      * @param {boolean} isLight Should it also be emitting light?
+     * * @param {quat4} rotation rotate object
      */
     //this.addMesh = function(filename, pos, velocity, mass, restitution, material, isLight, isHidden) {
-    this.addMesh = function(filename, pos, scale, velocity, mass, restitution, material, isLight, isHidden, rotation) {
+    this.addMesh = function(filename, pos, scale, velocity, mass, restitution, material, isLight, isHidden, rotation, isSpinned, physicsActive) {
         if (isLight === undefined) {
             isLight = false;
         }
         if (isHidden === undefined) {
             isHidden = false;
+        }
+        if (rotation === undefined)
+        {
+            rotation = [0, 0, 0, 1];
+        }
+        if (isSpinned === undefined)
+        {
+            isSpinned = false;
+        }
+        if (physicsActive === undefined) {
+            physicsActive = true;
         }
         // Step 1: Setup the convex hull collision shape
         // for the mesh
@@ -409,6 +361,10 @@ function Particles() {
             "pos":pos,
             "velocity":velocity,
             "mass":mass,
+            "transform":[scale[0], 0, 0, pos[0], 
+                         0, scale[1], 0, pos[1],
+                         0, 0, scale[2], pos[2],
+                         0, 0, 0, 1],
             "shapes":[
                 {"type":"mesh",
                 "filename":filename,
@@ -417,6 +373,7 @@ function Particles() {
             ]
         };
         this.scene.children.push(shape);
+        
         if (isLight) {
             // If it is a light, need to also add it to the list of lights
             shape.color = this.scene.materials[material].kd;
@@ -425,24 +382,169 @@ function Particles() {
         }
         
         // Step 3: Setup ammo.js physics engine entry
-        const localInertia = new Ammo.btVector3(velocity[0], velocity[1], velocity[2]);
-        colShape.calculateLocalInertia(mass, localInertia);
-        // Need to redefine the transformation for the physics engine
-        const ptransform = new Ammo.btTransform();
-        ptransform.setIdentity();
-        ptransform.setOrigin(new Ammo.btVector3(pos[0], pos[1], pos[2]));
-        ptransform.setRotation(new Ammo.btQuaternion(rotation[0], rotation[1], rotation[2], rotation[3]));
-        shape.ptransform = ptransform;
-        updateTransformation(shape);
-        const motionState = new Ammo.btDefaultMotionState(ptransform);
-        const rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, colShape, localInertia);
-        // The final rigid body object
-        shape.body = new Ammo.btRigidBody(rbInfo); 
-        shape.body.setRestitution(restitution);
-        // Finally, add the rigid body to the simulator
-        this.dynamicsWorld.addRigidBody(shape.body);
-        shape.physicsActive = true;
+    
+        shape.physicsActive = physicsActive;
+        //shape.isSpinned = isSpinned;
+        
+        if (physicsActive)
+        {
+            const localInertia = new Ammo.btVector3(velocity[0], velocity[1], velocity[2]);
+            colShape.calculateLocalInertia(mass, localInertia);
+            // Need to redefine the transformation for the physics engine
+            const ptransform = new Ammo.btTransform();
+            ptransform.setIdentity();
+            ptransform.setOrigin(new Ammo.btVector3(pos[0], pos[1], pos[2]));
+            ptransform.setRotation(new Ammo.btQuaternion(rotation[0], rotation[1], rotation[2], rotation[3]));
+            shape.ptransform = ptransform;
+            updateTransformation(shape);
+            const motionState = new Ammo.btDefaultMotionState(ptransform);
+            const rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, colShape, localInertia);
+            // The final rigid body object
+            shape.body = new Ammo.btRigidBody(rbInfo); 
+            shape.body.setRestitution(restitution);
+            // Finally, add the rigid body to the simulator
+            this.dynamicsWorld.addRigidBody(shape.body);
+        }
+        
         return shape;
+    }
+
+    this.addNewMesh = function(filename, pos, scale, velocity, mass, restitution, material, isLight, isHidden, rotation, isSpinned, physicsActive) {
+        if (isLight === undefined) {
+            isLight = false;
+        }
+        if (isHidden === undefined) {
+            isHidden = false;
+        }
+        if (rotation === undefined)
+        {
+            rotation = [0, 0, 0, 1];
+        }
+        if (isSpinned === undefined)
+        {
+            isSpinned = false;
+        }
+        if (physicsActive === undefined) {
+            physicsActive = true;
+        }
+        // Step 1: Setup the convex hull collision shape
+        // for the mesh
+        mesh = new BasicMesh();
+        let lines = BlockLoader.loadTxt(filename);
+        let res = loadFileFromLines(lines.split("\n"));
+        let vertices = res.vertices;
+        let faces = res.faces;
+        let btMesh = new Ammo.btTriangleMesh();
+        // Copy vertex information over to bullet
+        for (let i = 0; i < vertices.length; i++) {
+            let v = vertices[i];
+            vertices[i] = new Ammo.btVector3(scale[0]*v[0], scale[1]*v[1], scale[2]*v[2]);
+        }
+        // Copy over face information (assuming triangle mesh)
+        for (let i = 0; i < faces.length; i++) {
+            let f = faces[i];
+            btMesh.addTriangle(vertices[f[0]], vertices[f[1]], vertices[f[2]]);
+        }
+        let colShape = new Ammo.btConvexTriangleMeshShape(btMesh);
+        /*let hull = new Ammo.btShapeHull(colShape);
+        let margin = colShape.getMargin();
+        hull.buildHull(margin);
+        colShape.setUserPointer(hull);*/
+
+        // Step 2: Initialize the scene graph entry
+        let shape = {
+            "scale":scale,
+            "pos":pos,
+            "velocity":velocity,
+            "mass":mass,
+            "transform":[scale[0], 0, 0, pos[0], 
+                         0, scale[1], 0, pos[1],
+                         0, 0, scale[2], pos[2],
+                         0, 0, 0, 1],
+            "shapes":[
+                {"type":"mesh",
+                "filename":filename,
+                "material":material,
+                "hidden":isHidden}
+            ]
+        };
+        this.scene.children.push(shape);
+        
+        if (isLight) {
+            // If it is a light, need to also add it to the list of lights
+            shape.color = this.scene.materials[material].kd;
+            shape.atten = [1, 0, 0];
+            this.scene.lights.push(shape);
+        }
+        
+        // Step 3: Setup ammo.js physics engine entry
+    
+        shape.physicsActive = physicsActive;
+        //shape.isSpinned = isSpinned;
+        
+        if (physicsActive)
+        {
+            const localInertia = new Ammo.btVector3(velocity[0], velocity[1], velocity[2]);
+            colShape.calculateLocalInertia(mass, localInertia);
+            // Need to redefine the transformation for the physics engine
+            const ptransform = new Ammo.btTransform();
+            ptransform.setIdentity();
+            ptransform.setOrigin(new Ammo.btVector3(pos[0], pos[1], pos[2]));
+            ptransform.setRotation(new Ammo.btQuaternion(rotation[0], rotation[1], rotation[2], rotation[3]));
+            shape.ptransform = ptransform;
+            updateTransformation(shape);
+            const motionState = new Ammo.btDefaultMotionState(ptransform);
+            const rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, colShape, localInertia);
+            // The final rigid body object
+            shape.body = new Ammo.btRigidBody(rbInfo); 
+            shape.body.setRestitution(restitution);
+            // Finally, add the rigid body to the simulator
+            this.dynamicsWorld.addRigidBody(shape.body);
+        }
+        
+        return shape;
+    }
+
+    this.initCityFenceX = function(n, rotation) {
+
+        let pos = [-95, 0.5, -30];
+        for (let i = 1; i <= n; i++)
+        {
+            pos = [-95 + (i*9), 0.5, -30];
+            this.addMesh("ggslac/meshes/d/city_fence.off", pos, [0.02, 0.03, 0.02], [0, 0, 0], 0, 0, "goldish", false, false, rotation);
+        }
+        //console.log("Position " + pos);
+    }
+
+    this.initCityFenceZ = function(n, rotation) {
+
+        let pos = [-95, 0.5, -30];
+        for (let i = 1; i <= n; i++)
+        {
+            pos = [-13.5, 0.5, -21.5 - (i*9)];
+            this.addMesh("ggslac/meshes/d/city_fence.off", pos, [0.02, 0.03, 0.02], [0, 0, 0], 0, 0, "goldish", false, false, rotation);
+        }
+    }
+
+    this.initOldFenceX = function(n, rotation) {
+
+        let pos = [-95, 0.5, -30];
+        for (let i = 1; i <= n; i++)
+        {
+            pos = [15 + (i*4), 1, -33];
+            this.addMesh("ggslac/meshes/d/OldFence.off", pos, [0.04, 0.03, 0.056], [0, 0, 0], 15, 0, "goldish", false, false, rotation);
+        }
+        //console.log("Position " + pos);
+    }
+
+    this.initOldFenceZ = function(n, rotation) {
+
+        let pos = [-95, 0.5, -30];
+        for (let i = 1; i <= n; i++)
+        {
+            pos = [16.5, 1, -34.5 + (i*4)];
+            this.addMesh("ggslac/meshes/d/OldFence.off", pos, [0.04, 0.03, 0.056], [0, 0, 0], 15, 0, "goldish", false, false, rotation);
+        }
     }
 
     /**
@@ -459,6 +561,20 @@ function Particles() {
             let rotation = vec4.create();
             vec4.random(rotation, 1);
             this.addBox(pos, scale, velocity, mass, restitution, "blueambient", rotation);
+        }
+    }
+
+    this.randomlyInitWoodenBoxes = function(N) {
+        for (let i = 0; i < N; i++) {
+            //mesh = "ggslac/meshes/d/w_box.off";
+            let pos = [-5*Math.random()*10-5, Math.random()*10, 5*Math.random()*10-5];
+            //let scale = [0.5*Math.random(), 0.5*Math.random(), 0.5*Math.random()];
+            //let velocity = [Math.random()*0.1, Math.random()*0.1, Math.random()*0.1];
+            //const mass = Math.random();
+            //const restitution = Math.random();
+            let rotation = vec4.create();
+            vec4.random(rotation, 1);
+            this.addMesh("ggslac/meshes/d/w_box.off", pos, [3, 3, 3], [0, 0, 0], 20, 0, "goldish", false, false, rotation);
         }
     }
 
@@ -553,7 +669,19 @@ function Particles() {
         this.lastTime = thisTime;
         this.dynamicsWorld.stepSimulation(dt, 10);
         for (shape of this.scene.children) {
-            if (shape.physicsActive) {
+            if (shape.isSpinned)
+            {
+                // let mrot = mat4.create();
+                // mat4.fromYRotation(mrot, dt*6);
+                // mat4.multiply(shape.transform, shape.transform, mrot); 
+                    // let v = vec3.create();
+                    // vec3.copy(v, shape.pos);
+                    // v[0] += 5*Math.cos(6*this.time);
+                    // v[2] += 5*Math.sin(6*this.time);
+                    // mat4.translate(shape.transform, mat4.create(), v);
+                    console.log("spinned");
+            }
+            else if (shape.physicsActive) {
                 let trans = shape.ptransform;
                 shape.body.getMotionState().getWorldTransform(trans);
                 updateTransformation(shape);
@@ -566,6 +694,14 @@ function Particles() {
                     v[2] += 5*Math.sin(6*this.time);
                     mat4.translate(shape.transform, mat4.create(), v);
                 }
+                // else if (shape.isSpinned)
+                // {
+                //     let v = vec3.create();
+                //     vec3.copy(v, shape.pos);
+                //     v[0] += 5*Math.cos(6*this.time);
+                //     v[2] += 5*Math.sin(6*this.time);
+                //     mat4.translate(shape.transform, mat4.create(), v);
+                // }
                 else {
                     let mrot = mat4.create();
                     mat4.fromYRotation(mrot, dt*6);
