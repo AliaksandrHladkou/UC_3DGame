@@ -67,55 +67,103 @@
 
     // Load the sample scene as a default
     particles = new Particles();
-    //particles.randomlyInitSpheres(50);
-    particles.randomlyInitBoxes(50);
+    //particles.randomlyInitSpheres(10);
+    //particles.randomlyInitBoxes(100);
 
-    //scene floor and walls
-    particles.addBox([0, 0, 0], [100, 1, 100], [0, 0, 0], 0, 0.9, "ground");
-    particles.addBox([0, 3, -50], [100, 6, 1], [0, 0, 0], 0, 0.2, "unique");
-    particles.addBox([0, 3, 50], [100, 6, 1], [0, 0, 0], 0, 0.2, "unique");
-    particles.addBox([50, 3, 0], [1, 6, 100], [0, 0, 0], 0, 0.2, "newunique");
-    particles.addBox([-50, 3, 0], [1, 6, 100], [0, 0, 0], 0, 0.2, "newunique");
+    function rotateMesh(aroundY, aroundX, aroundZ) {
+        if (aroundX === undefined)
+        {
+            aroundX = 0;
+        }
+        if (aroundZ === undefined)
+        {
+            aroundZ = 0;
+        }
+        let rotate = quat.create();
+        rotate = quat.fromEuler(rotate, aroundX, aroundY, aroundZ);
+        return rotate;
+    }
 
-    //unmovable objects
-    let q = quat.create();
-    q = quat.setAxisAngle(q, [1, 0 ,0], 0.78);
-    q = quat.fromEuler(q, 45, 0, 0);
-    // q = quat.rotateX(q, q, 0.78);
-    // q = quat.rotateY(q, q, 0.78);
-    //console.log(q);
-    //particles.addBox([2, 1, 0], [2, 2, 0], [0, 0, 0], 0, 0.2, "blueambient", q);
+    function initHouseMeshes() {
+        //Houses and apt.
+        particles.hom = particles.addMesh("ggslac/meshes/d/Apt_build.off", [-50, 0.51, -73], [0.05, 0.05, 0.05], [0, 0, 0], 0, 0, "unique");
+        particles.hom = particles.addMesh("ggslac/MedHouse.off", [30, 0.5, 30], [0.03, 0.03, 0.03], [0, 0, 0], 0, 0, "unique", false, false, rotateMesh(270));
+        particles.hom = particles.addMesh("ggslac/MBHouse.off", [30, 0.5, 0], [0.03, 0.03, 0.03], [0, 0, 0], 0, 0, "unique", false, false, rotateMesh(90, 0, 90));
+        particles.hom = particles.addMesh("ggslac/housemed.off", [30, 15, -25], [1.2, 1.2, 1.2], [0, 0, 0], 1000, 0, "unique", false, false, rotateMesh(-45));
+        //tower
+        particles.tower = particles.addMesh("ggslac/meshes/d/tower.off", [90, 20, -90], [2, 2, 2], [0, 0, 0], 100, 0, "unique", false, false);
+        particles.tower = particles.addMesh("ggslac/meshes/d/projector_mast.off", [80, 15, -80], [5, 5, 5], [0, 0, 0], 100, 0, "rust", false, false);
+        particles.tower = particles.addMesh("ggslac/meshes/d/tower.off", [90, 20, 90], [2, 2, 2], [0, 0, 0], 100, 0, "unique", false, false);
+        particles.tower = particles.addMesh("ggslac/meshes/d/WaterTower.off", [90, 1, 0], [0.3, 0.3, 0.3], [0, 0, 0], 30, 0, "goldish", false, false);
+        //Wind Mill
+        particles.windmill = particles.addMesh("ggslac/meshes/d/WindMill.off", [50, 0.5, 50], [1.5, 1.5, 1.5], [0, 0, 0], 0, 0, "unique", false, false, rotateMesh(225));
+    }
 
-    //one global light
-    particles.addSphere([0, 20, 0], 1.0, [0, 0, 0], 0.0, 0.0, "white", true);
+    function initFences() {
+        //Add fenses 
+        //initFenceX = function(mesh, initPosX, initPosY, initPosZ, scale, n, interval, mass, rotation)
+        //City fences
+        particles.initFenceX("ggslac/meshes/d/city_fence.off", -104, 0.5, -30, [0.02, 0.03, 0.02], 9, 9, 0, rotateMesh(0));
+        particles.initFenceZ("ggslac/meshes/d/city_fence.off", -13.5, 0.5, -21.5, [0.02, 0.03, 0.02], 7, -9, 0, rotateMesh(90));
 
-    //add house
-    let q1 = quat.create();
-    //q1 = quat.setAxisAngle(q1, [0, 1 ,0], 0.78);
-    q1 = quat.fromEuler(q1, 0, 90, 90);
-    particles.hom = particles.addMesh("ggslac/MBHouse.off", [30, 0.5, 0], [0.03, 0.03, 0.03], [0, 0, 0], 0, 0, "green", false, false, q1);
+        //Old fences
+        particles.initFenceX("ggslac/meshes/d/OldFence.off", 15, 1, -33, [0.04, 0.03, 0.056], 5, 4, 15, rotateMesh(0));
+        particles.initFenceZ("ggslac/meshes/d/OldFence.off", 16.5, 1, -34.5, [0.04, 0.03, 0.056], 5, 4, 15, rotateMesh(90));
 
-    let q2 = quat.create();
-    q2 = quat.fromEuler(q2, 0, 270, 0);
-    particles.hom = particles.addMesh("ggslac/MedHouse.off", [30, 0.5, 30], [0.03, 0.03, 0.03], [0, 0, 0], 0, 0, "green", false, false, q2);
+        particles.fence = particles.addMesh("ggslac/meshes/d/MetalRailing.off", [5, 0.5, -30], [0.5, 0.5, 0.5], [0, 0, 0], 5, 0.8, "goldish", false, false, rotateMesh(270));
+    }
 
-    let rotat3 = quat.create();
-    rotat3 = quat.fromEuler(rotat3, 0, -45, 0);
-    particles.hom = particles.addMesh("ggslac/housemed.off", [30, 8, -25], [1, 1, 1], [0, 0, 0], 0, 0, "green", false, false, rotat3);
+    function initTanks() {
+        //adding tanks
+        particles.tank = particles.addMesh("ggslac/meshes/d/MC1.off", [-10, 1, -10], [1.5, 1.5, 1.5], [0, 0, 0], 50, 0, "green");
+        particles.tank = particles.addMesh("ggslac/meshes/d/MC1.off", [-15, 1, -10], [1.5, 1.5, 1.5], [0, 0, 0], 50, 0, "green");
+        //particles.tank = particles.addMesh("ggslac/meshes/d/M1A1.off", [-20, 0.5, -10], [1.5, 1.5, 1.5], [0, 0, 0], 0, 0, "green");
+        //particles.tank = particles.addMesh("ggslac//meshes/d/maus.off", [10, 0.5, -15], [1, 1, 1], [0, 0, 0], 0, 0, "green", false, false, rotateNeg45);
+    }
 
-    particles.container = particles.addMesh("ggslac/container.off", [30, 0.5, 20], [0.5, 0.5, 0.5], [0, 0, 0], 0, 0, "green", false, false, rotat3);
-    particles.gun = particles.addMesh("ggslac/SuomiKP31.off", [4, 2, -35], [2, 2, 2], [0, 0, 0], 0, 0, "gun", false, false, rotat3);
-    particles.gun = particles.addMesh("ggslac/gun2.off", [0, 2, -35], [0.2, 0.2, 0.2], [0, 0, 0], 0, 0, "gun", false, false, rotat3);
-    particles.gun = particles.addMesh("ggslac/M16.off", [0, 1.5, -30], [0.02, 0.02, 0.02], [0, 0, 0], 0, 0, "gun", false, false, rotat3);
-    particles.gun = particles.addMesh("ggslac/Bullet.off", [3, 2, -35.5], [2, 2, 2], [0, 0, 0], 0, 0, "white", false, false, rotat3);
+    function initAdds() {
+        particles.containers = particles.addMesh("ggslac/container.off", [30, 0.5, 20], [0.5, 0.5, 0.5], [0, 0, 0], 0, 0, "unique", false, false, rotateMesh(-45));
 
-    //particles.knife = particles.addMesh("ggslac/knife.off", [1, 2, 5], [0.5, 0.5, 0.5], [0, 0, 0], 0, 0, "green", false, false, rotat3);
+        //Adding different guns. TODO: randomly throw on game (avoiding build. locations).
+        particles.gun = particles.addNewMesh("ggslac/SuomiKP31.off", [4, 2, -35], [2, 2, 2], [0, 0, 0], 0, 0, "gun", false, false, rotateMesh(-45), true, false);
+        particles.gun = particles.addMesh("ggslac/gun2.off", [0, 2, -35], [0.3, 0.3, 0.3], [0, 0, 0], 0, 0, "gun", false, false, rotateMesh(-45), true, false);
+        particles.gun = particles.addMesh("ggslac/meshes/d/M16.off", [-5, 1.5, -35], [0.02, 0.02, 0.02], [0, 0, 0], 0, 0, "gun", false, false, rotateMesh(-45), true, false);
+        particles.gun = particles.addMesh("ggslac/meshes/d/Glock19.off", [-10, 1.5, -35], [0.01, 0.01, 0.01], [0, 0, 0], 0, 0, "gun", false, false, rotateMesh(-45), true, false);
+        //particles.gun = particles.addMesh("ggslac/Bullet.off", [3, 2, -35.5], [2, 2, 2], [0, 0, 0], 0, 0, "white", false, false, rotateMesh(-45));
 
-    //particles.car = particles.addMesh("ggslac/meshes/dwlded/DeLorean.off", [2, 10, 2], [1, 1, 1], [0, 0, 0], 0, 0, "green");
+        //Adding pallets
+        particles.fence = particles.addMesh("ggslac/meshes/d/pallet.off", [15, 1, -10], [0.01, 0.01, 0.01], [0, 0, 0], 15, 0, "goldish", false, false);
 
+        particles.tachka = particles.addMesh("ggslac/meshes/d/taczki.off", [10, 0.5, -20], [0.03, 0.03, 0.03], [0, 0, 0], 10, 0, "goldish");
+
+        particles.randomlyInitWoodenBoxes(20);
+
+        //particles.ul = particles.addMesh("ggslac//meshes/d/Ulyanovsk.off", [100, 8, 15], [0.1, 0.1, 0.1], [0, 0, 0], 0, 0, "green", false, false, rotate270);
+    }
+
+    function initBase() {
+        //scene floor and walls
+        particles.addBox([0, 0, 0], [200, 1, 200], [0, 0, 0], 0, 0.9, "ground");
+        particles.addBox([0, 3, -100], [200, 6, 1], [0, 0, 0], 0, 0.2, "unique");
+        particles.addBox([0, 3, 100], [200, 6, 1], [0, 0, 0], 0, 0.2, "unique");
+        particles.addBox([100, 3, 0], [1, 6, 200], [0, 0, 0], 0, 0.2, "newunique");
+        particles.addBox([-100, 3, 0], [1, 6, 200], [0, 0, 0], 0, 0.2, "newunique");
+
+        //One global light
+        particles.addSphere([0, 20, 0], 1.0, [0, 0, 0], 0.0, 0.0, "white", true);
+    }
+
+
+    initTanks();
+    initBase();
+    initHouseMeshes();
+    initFences();
+    initAdds();
+
+    //particles.knife = particles.addMesh("ggslac/meshes/d/knife.off", [1, 2, 5], [1, 1, 1], [0, 0, 0], 0, 0, "green", false, false, rotateNeg45);
 
     //particles.cow = particles.addMesh("ggslac/meshes/box.off", [0, 1, 0], [0, 0, 0], 10, 1, "green");
-    particles.cow = particles.addMesh("ggslac/meshes/icosahedron.off", [0, 1, 0], [1, 1, 1], [0, 0, 0], 10, 1, "white");
+    particles.cow = particles.addMesh("ggslac/meshes/d/MC1.off", [0, 1, 0], [1, 1, 1], [0, 0, 0], 10, 0, "green");
 
     glcanvas.setupScene(particles.scene, glcanvas.clientWidth, glcanvas.clientHeight);
     glcanvas.drawEdges = false;
