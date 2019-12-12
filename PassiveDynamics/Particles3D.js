@@ -14,6 +14,7 @@ const KEY_A = 65;
 const KEY_D = 68;
 const KEY_C = 67;
 const KEY_E = 69;
+const KEY_R = 82;
 
 /**
  * Update the glMatrix transform field of a shape based on 
@@ -64,9 +65,12 @@ function Particles() {
                         "ka":[0.7, 0.0, 0.0],
                         "kd":[1, 1, 1]
                     },
+                    "redish":{
+                        "ka":[0.7, 0.0, 0.0],
+                    },
                     "blueambient":{
                         "ka":[0.0, 0.0, 0.7],
-                        "kd":[1, 1, 1]
+                        "kd":[0.7, 0.7, 0.7]
                     },
                     "green":{
                         "kd":[0.0, 0.7, 0.0]
@@ -76,7 +80,8 @@ function Particles() {
                         "kd":[1, 1, 1]
                     },
                     "ground":{
-                        "ka":[0.1, 0.1, 0.1]
+                        "ka":[0.1, 0.1, 0.1],
+                        "kd":[1, 1, 1]
                     },
                     "unique":{
                         "ka":[0.2, 0.1, 0.1]
@@ -147,12 +152,19 @@ function Particles() {
         if (isHidden === undefined) {
             isHidden = false;
         }
+        // if (isSpinned === undefined) {
+        //     isSpinned = false;
+        // }
         // Step 1: Setup scene graph entry for rendering
         let box = {
             "scale":scale,
             "pos":pos,
             "velocity":velocity,
             "mass":mass,
+            "transform":[scale[0], 0, 0, pos[0], 
+                         0, scale[1], 0, pos[1],
+                         0, 0, scale[2], pos[2],
+                         0, 0, 0, 1],
             "shapes":[
                 {
                 "type":"box",
@@ -167,7 +179,10 @@ function Particles() {
             ]
         }
         this.scene.children.push(box);
+        // box.isSpinned = isSpinned;
 
+        // if (isSpinned)
+        // {
         const boxShape = new Ammo.btBoxShape(new Ammo.btVector3(scale[0]/2, scale[1]/2, scale[2]/2));
         const ptransform = new Ammo.btTransform();
         ptransform.setIdentity();
@@ -192,6 +207,161 @@ function Particles() {
         // Finally, add the rigid body to the simulator
         this.dynamicsWorld.addRigidBody(box.body);
         box.physicsActive = true;
+    //}
+        return box;
+    }
+
+    this.addNewBox = function(pos, scale, velocity, mass, restitution, material, isSpinned, boxy, physicsActive, rotation, isHidden) {
+        if (material === undefined) {
+            material = "default";
+        }
+        if (rotation === undefined) {
+            rotation = [0, 0, 0, 1];
+        }
+        if (isHidden === undefined) {
+            isHidden = false;
+        }
+        if (isSpinned === undefined) {
+            isSpinned = false;
+        }
+        if (physicsActive === undefined) {
+            physicsActive = true;
+        }
+        if (boxy === undefined) {
+            boxy = true;
+        }
+        // Step 1: Setup scene graph entry for rendering
+        let box = {
+            "scale":scale,
+            "pos":pos,
+            "velocity":velocity,
+            "mass":mass,
+            "transform":[scale[0], 0, 0, pos[0], 
+                         0, scale[1], 0, pos[1],
+                         0, 0, scale[2], pos[2],
+                         0, 0, 0, 1],
+            "shapes":[
+                {
+                "type":"box",
+                "material":material,
+                "hidden":isHidden
+                //"filename": "../ggslac/scenes/boxes.json"
+                }
+                // "type": "scene",
+                // "filename": "../ggslac/scenes/boxes.json",
+                // "material": material,
+                // "hidden": isHidden}
+            ]
+        }
+        this.scene.children.push(box);
+        box.isSpinned = isSpinned;
+        box.physicsActive = physicsActive;
+        box.boxy = boxy;
+
+        if (physicsActive)
+        {
+            const boxShape = new Ammo.btBoxShape(new Ammo.btVector3(scale[0]/2, scale[1]/2, scale[2]/2));
+            const ptransform = new Ammo.btTransform();
+            ptransform.setIdentity();
+            ptransform.setOrigin(new Ammo.btVector3(pos[0], pos[1], pos[2]));	
+            ptransform.setRotation(new Ammo.btQuaternion(rotation[0], rotation[1], rotation[2], rotation[3]));
+            box.ptransform = ptransform; 
+            updateTransformation(box);
+            const isDynamic = (mass != 0);
+            let localInertia = null;
+            if (isDynamic) {
+                localInertia = new Ammo.btVector3(velocity[0], velocity[1], velocity[2]);
+                boxShape.calculateLocalInertia(mass,localInertia);
+            }
+            else {
+                localInertia = new Ammo.btVector3(0, 0, 0);
+            }
+            let motionState = new Ammo.btDefaultMotionState(ptransform);
+            let rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, boxShape, localInertia);
+            // The final rigid body object
+            box.body = new Ammo.btRigidBody(rbInfo);
+            box.body.setRestitution(restitution);
+            // Finally, add the rigid body to the simulator
+            this.dynamicsWorld.addRigidBody(box.body);
+            box.physicsActive = true;
+        }
+        return box;
+    }
+
+    this.addMeshAsBox = function(filename, pos, scale, velocity, mass, restitution, material, isSpinned, boxy, physicsActive, rotation, isHidden) {
+        if (material === undefined) {
+            material = "default";
+        }
+        if (rotation === undefined) {
+            rotation = [0, 0, 0, 1];
+        }
+        if (isHidden === undefined) {
+            isHidden = false;
+        }
+        if (isSpinned === undefined) {
+            isSpinned = false;
+        }
+        if (physicsActive === undefined) {
+            physicsActive = true;
+        }
+        if (boxy === undefined) {
+            boxy = true;
+        }
+        // Step 1: Setup scene graph entry for rendering
+        let box = {
+            "scale":scale,
+            "pos":pos,
+            "velocity":velocity,
+            "mass":mass,
+            "transform":[scale[0], 0, 0, pos[0], 
+                         0, scale[1], 0, pos[1],
+                         0, 0, scale[2], pos[2],
+                         0, 0, 0, 1],
+            "shapes":[
+                {
+                "type":"mesh",
+                "material":material,
+                "hidden":isHidden,
+                "filename": filename
+                }
+                // "type": "scene",
+                // "filename": "../ggslac/scenes/boxes.json",
+                // "material": material,
+                // "hidden": isHidden}
+            ]
+        }
+        this.scene.children.push(box);
+        box.isSpinned = isSpinned;
+        box.physicsActive = physicsActive;
+        box.boxy = boxy;
+
+        if (physicsActive)
+        {
+            const boxShape = new Ammo.btBoxShape(new Ammo.btVector3(scale[0]/2, scale[1]/2, scale[2]/2));
+            const ptransform = new Ammo.btTransform();
+            ptransform.setIdentity();
+            ptransform.setOrigin(new Ammo.btVector3(pos[0], pos[1], pos[2]));	
+            ptransform.setRotation(new Ammo.btQuaternion(rotation[0], rotation[1], rotation[2], rotation[3]));
+            box.ptransform = ptransform; 
+            updateTransformation(box);
+            const isDynamic = (mass != 0);
+            let localInertia = null;
+            if (isDynamic) {
+                localInertia = new Ammo.btVector3(velocity[0], velocity[1], velocity[2]);
+                boxShape.calculateLocalInertia(mass,localInertia);
+            }
+            else {
+                localInertia = new Ammo.btVector3(0, 0, 0);
+            }
+            let motionState = new Ammo.btDefaultMotionState(ptransform);
+            let rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, boxShape, localInertia);
+            // The final rigid body object
+            box.body = new Ammo.btRigidBody(rbInfo);
+            box.body.setRestitution(restitution);
+            // Finally, add the rigid body to the simulator
+            this.dynamicsWorld.addRigidBody(box.body);
+            box.physicsActive = true;
+        }
         return box;
     }
     
@@ -248,7 +418,7 @@ function Particles() {
         if (isLight) {
             // If it is a light, need to also add it to the list of lights
             sphere.color = this.scene.materials[material].kd;
-            sphere.atten = [1, 0, 0];
+            sphere.atten = [2, 0, 0];
             this.scene.lights.push(sphere);
         }
         
@@ -317,7 +487,10 @@ function Particles() {
      * * @param {quat4} rotation rotate object
      */
     //this.addMesh = function(filename, pos, velocity, mass, restitution, material, isLight, isHidden) {
-    this.addMesh = function(filename, pos, scale, velocity, mass, restitution, material, isLight, isHidden, rotation, isSpinned, physicsActive) {
+    this.addMesh = function(filename, pos, scale, velocity, mass, restitution, material, isLight, isHidden, rotation, isSpinned, physicsActive, isTank) {
+        if (isTank === undefined) {
+            isTank = false;
+        }
         if (isLight === undefined) {
             isLight = false;
         }
@@ -388,7 +561,8 @@ function Particles() {
         // Step 3: Setup ammo.js physics engine entry
     
         shape.physicsActive = physicsActive;
-        //shape.isSpinned = isSpinned;
+        shape.isSpinned = isSpinned;
+        shape.isTank = isTank;
         
         if (physicsActive)
         {
@@ -511,7 +685,6 @@ function Particles() {
 
     this.initFenceX = function(mesh, initPosX, initPosY, initPosZ, scale, n, interval, mass, rotation) {
 
-        //let pos = [-95, 0.5, -33];
         for (let i = 1; i <= n; i++)
         {
             let pos = [initPosX + (i*interval), initPosY, initPosZ];
@@ -521,12 +694,25 @@ function Particles() {
 
     this.initFenceZ = function(mesh, initPosX, initPosY, initPosZ, scale, n, interval, mass, rotation) {
 
-        //let pos = [-95, 0.5, -33];
         for (let i = 1; i <= n; i++)
         {
             let pos = [initPosX, initPosY, initPosZ + (i*interval)];
             this.addMesh(mesh, pos, scale, [0, 0, 0], mass, 0, "goldish", false, false, rotation);
         }
+    }
+
+    this.initFenceXZ = function(mesh, pos, scale, n, interval, mass, rotation, negative) {
+        if (negative === undefined)
+        {
+            negative = false;
+        }
+
+        for (let i = 1; i <= n; i++)
+        {
+            pos = [pos[0] + (interval[0]), pos[1], pos[2] + (interval[1])];
+            this.addMesh(mesh, pos, scale, [0, 0, 0], mass, 0, "goldish", false, false, rotation);
+        }
+        console.log("position: " + pos);
     }
 
 
@@ -547,10 +733,10 @@ function Particles() {
         }
     }
 
-    this.randomlyInitWoodenBoxes = function(N) {
+    this.randomlyInitWoodenBoxes = function(pos, N) {
         for (let i = 0; i < N; i++) {
             //mesh = "ggslac/meshes/d/w_box.off";
-            let pos = [-5*Math.random()*10-5, Math.random()*10, 5*Math.random()*10-5];
+            pos = [pos[0] + Math.random()*10, pos[1] + Math.random()*20, pos[2] + Math.random()*10];
             //let scale = [0.5*Math.random(), 0.5*Math.random(), 0.5*Math.random()];
             //let velocity = [Math.random()*0.1, Math.random()*0.1, Math.random()*0.1];
             //const mass = Math.random();
@@ -583,11 +769,12 @@ function Particles() {
         let U = vec3.create();
         vec3.copy(U, this.glcanvas.camera.up);
         vec3.cross(T, U, R);
+        //this.glfwSetInputMode(window, this.glcanvas.GLFW_CURSOR, this.glcanvas.GLFW_CURSOR_DISABLED);
         return {'T':T, 'U':U, 'R':R};
     }
 
     this.keyDown = function(evt) {
-        for (key of [KEY_W, KEY_S, KEY_D, KEY_A]) {
+        for (key of [KEY_W, KEY_S, KEY_D, KEY_A, KEY_R]) {
             if (evt.keyCode == key) {
                 this.keysDown[key] = true;
             }
@@ -595,7 +782,7 @@ function Particles() {
     }
 
     this.keyUp = function(evt) {
-        for (key of [KEY_W, KEY_S, KEY_D, KEY_A]) {
+        for (key of [KEY_W, KEY_S, KEY_D, KEY_A, KEY_R]) {
             if (evt.keyCode == key) {
                 this.keysDown[key] = false;
             }
@@ -603,37 +790,45 @@ function Particles() {
     }  
 
     this.makeClick = function(evt) {
-        let clickType = "LEFT";
-        evt.preventDefault();
-        if (evt.which) {
-            if (evt.which == 3) clickType = "RIGHT";
-            if (evt.which == 2) clickType = "MIDDLE";
-        }
-        else if (evt.button) {
-            if (evt.button == 2) clickType = "RIGHT";
-            if (evt.button == 4) clickType = "MIDDLE";
-        }
-        if (clickType == "RIGHT") {
-            let pos = vec3.create();
-            let res = this.getCameraVectors();
-            let T = res['T']; // Towards vector
-            let U = res['U']; // Up vector
-            vec3.scaleAndAdd(pos, this.glcanvas.camera.pos, U, 0);
-            vec3.scaleAndAdd(pos, pos, T, 2);
-            let sphere = this.addSphere(pos, 0.2, [0, 0, 0], 1, 0.5, "blueambient");
-            // Velocity is 40 units / second in the camera's towards direction
-            vec3.scale(T, T, 40); 
-            sphere.body.setLinearVelocity(new Ammo.btVector3(T[0], T[1], T[2]));
-            this.glcanvas.parseNode(sphere);
-        }
+        //let clickType = "LEFT";
+        //evt.preventDefault();
+        // if (evt.which) {
+        //     if (evt.which == 3) clickType = "RIGHT";
+        //     if (evt.which == 2) clickType = "MIDDLE";
+        // }
+        // else if (evt.button) {
+        //     if (evt.button == 2) clickType = "RIGHT";
+        //     if (evt.button == 4) clickType = "MIDDLE";
+        // }
+        // if (clickType == "RIGHT") {
+        //     let pos = vec3.create();
+        //     let res = this.getCameraVectors();
+        //     let T = res['T']; // Towards vector
+        //     let U = res['U']; // Up vector
+        //     vec3.scaleAndAdd(pos, this.glcanvas.camera.pos, U, 0);
+        //     vec3.scaleAndAdd(pos, pos, T, 2);
+        //     let sphere = this.addSphere(pos, 0.2, [0, 0, 0], 1, 0.5, "blueambient");
+        //     // Velocity is 40 units / second in the camera's towards direction
+        //     vec3.scale(T, T, 40); 
+        //     sphere.body.setLinearVelocity(new Ammo.btVector3(T[0], T[1], T[2]));
+        //     this.glcanvas.parseNode(sphere);
+        // }
     }
 
     this.setupListeners = function() {
         this.glcanvas.active = false; // Disable default listeners
-        this.keysDown = {KEY_W:false, KEY_S:false, KEY_A:false, KEY_D:false};
+        this.keysDown = {KEY_W:false, KEY_S:false, KEY_A:false, KEY_D:false, KEY_R:false};
         document.addEventListener('keydown', this.keyDown.bind(this), true);
         document.addEventListener('keyup', this.keyUp.bind(this), true);
         this.glcanvas.addEventListener('mousedown', this.makeClick.bind(this));
+        var mouse_monitor = function(e) {
+            var x = e.pageX;
+            var y = e.pageY;
+            // var z = e.pageZ;
+            // console.log(x, y, z);
+          }
+        //this.glcanvas.addEventListener('mousemove', mouse_monitor);
+        //this.glcanvas.motion('mousemove', mouse_monitor);
     }
 
 
@@ -652,30 +847,54 @@ function Particles() {
         this.lastTime = thisTime;
         this.dynamicsWorld.stepSimulation(dt, 10);
         for (shape of this.scene.children) {
-            if (shape.isSpinned)
-            {
-                // let mrot = mat4.create();
-                // mat4.fromYRotation(mrot, dt*6);
-                // mat4.multiply(shape.transform, shape.transform, mrot); 
-                    // let v = vec3.create();
-                    // vec3.copy(v, shape.pos);
-                    // v[0] += 5*Math.cos(6*this.time);
-                    // v[2] += 5*Math.sin(6*this.time);
-                    // mat4.translate(shape.transform, mat4.create(), v);
-                    console.log("spinned");
-            }
-            else if (shape.physicsActive) {
+            if (shape.physicsActive) {
+                // let checl = vec3.create();
+                // checl = vec3.fromValues(5, 0, 0);
+                // if (vec3.equals(shape.pos, checl) == true)
+                // {
+                //     console.log("Here is");
+                //     let v = vec3.create();
+                //     vec3.copy(v, shape.pos);
+                //     //v[0] += 60*Math.cos(this.time);
+                //     v[2] += 20;
+                //     //v[1] += 40*Math.cos(this.time);
+                //     mat4.translate(shape.transform, mat4.create(), v);
+                // }
                 let trans = shape.ptransform;
                 shape.body.getMotionState().getWorldTransform(trans);
                 updateTransformation(shape);
+                if (shape.isTank)
+                {
+                    let v = vec3.create();
+                    vec3.copy(v, shape.pos);
+                    //v[0] += 60*Math.cos(this.time);
+                    v[2] += 35*Math.sin(this.time*0.5);
+                    //v[1] += 40*Math.cos(this.time);
+                    mat4.translate(shape.transform, mat4.create(), v);
+                    trans.setOrigin(new Ammo.btVector3(v));
+                }
+                // if (shape.boxy) {
+                //     let mrot = mat4.create();
+                //         mat4.fromYRotation(mrot, dt*6);
+                //         mat4.multiply(shape.transform, shape.transform, mrot);
+                // }
+                // else {
+                //     let trans = shape.ptransform;
+                //     shape.body.getMotionState().getWorldTransform(trans);
+                //     updateTransformation(shape);
+                // }
             }
             else {
                 if (shape.isLight) {
                     let v = vec3.create();
                     vec3.copy(v, shape.pos);
-                    v[0] += 5*Math.cos(6*this.time);
-                    v[2] += 5*Math.sin(6*this.time);
+                    v[0] += 60*Math.cos(this.time);
+                    v[2] += 60*Math.sin(this.time);
+                    v[1] += 40*Math.cos(this.time);
                     mat4.translate(shape.transform, mat4.create(), v);
+                    shape.radius = 20*Math.random();
+                    shape.atten = [5, 0, 0];
+                    //mat4.rotateZ(shape.transform, shape.transform, 60);
                 }
                 // else if (shape.isSpinned)
                 // {
@@ -687,15 +906,17 @@ function Particles() {
                 // }
                 else {
                     let mrot = mat4.create();
-                    mat4.fromYRotation(mrot, dt*6);
+                    mat4.fromYRotation(mrot, dt);
                     mat4.multiply(shape.transform, shape.transform, mrot);
+                    //console.log("radius" + shape.radius);
+                    //shape.radius = 50;
                 }
             }
         }
         if (!(this.glcanvas === null)) {
             // Make the camera in world coordinates 4 units in z in front of the cow
             // and 2 units above the cow
-            vec3.add(this.glcanvas.camera.pos, this.cow.pos, vec3.fromValues(0, 2, 4));
+            vec3.add(this.glcanvas.camera.pos, this.cow.pos, vec3.fromValues(0, 3, 0));
         }
         if (!(this.keysDown === undefined)) {
             let res = this.getCameraVectors();
@@ -705,7 +926,8 @@ function Particles() {
             vec3.scale(R, R, 2);
             if (this.keysDown[KEY_W]) {
                 // Apply a central impulse in the forward direction of the camera
-                this.cow.body.applyCentralImpulse(new Ammo.btVector3(T[0], T[1], T[2]));
+                this.cow.body.applyCentralImpulse(new Ammo.btVector3(T[0], T[1], T[2]), this.cow.pos);
+                //this.tank.body.applyCentralImpulse(new Ammo.btVector3(T[0]*5, T[1]*5, T[2]*5), this.tank.pos);
             }
             if (this.keysDown[KEY_S]) {
                 // Apply a central impulse in the reverse direction of the camera
@@ -715,11 +937,18 @@ function Particles() {
             if (this.keysDown[KEY_D]) {
                 // Apply a central impulse in the right direction of the camera
                 this.cow.body.applyCentralImpulse(new Ammo.btVector3(R[0], R[1], R[2]));
+                //this.cow.body.applyImpulse(new Ammo.btVector3(T[0], T[1], T[2]), vec3.add(this.glcanvas.camera.pos, this.cow.pos, vec3.fromValues(0, 0, -2)));
             }
             if (this.keysDown[KEY_A]) {
                 // Apply a central impulse in the left direction of the camera
                 vec3.scale(R, R, -1);
                 this.cow.body.applyCentralImpulse(new Ammo.btVector3(R[0], R[1], R[2]));
+            }
+            if (this.keysDown[KEY_R]) {
+                // Apply a central impulse in the left direction of the camera
+                //vec3.add(this.glcanvas.camera.pos, this.cow.pos, vec3.fromValues(0, 3, -2));
+                //vec3.rotateY(this.glcanvas.camera.pos, this.cow.pos, this.cow.pos, 10);
+                vec3.add(this.glcanvas.camera.pos, this.glight.pos, vec3.fromValues(0, 25, 0)); 
             }
         }
     }
