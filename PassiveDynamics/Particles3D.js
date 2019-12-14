@@ -13,8 +13,10 @@ const KEY_S = 83;
 const KEY_A = 65;
 const KEY_D = 68;
 const KEY_C = 67;
-const KEY_E = 69;
+
 const KEY_R = 82;
+const KEY_E = 69;
+const KEY_SPACE = 32;
 
 /**
  * Update the glMatrix transform field of a shape based on 
@@ -211,7 +213,7 @@ function Particles() {
         return box;
     }
 
-    this.addNewBox = function(pos, scale, velocity, mass, restitution, material, isSpinned, boxy, physicsActive, rotation, isHidden) {
+    this.addNewBox = function(pos, scale, velocity, mass, restitution, material, isSpinned, movable, physicsActive, rotation, isHidden) {
         if (material === undefined) {
             material = "default";
         }
@@ -227,8 +229,8 @@ function Particles() {
         if (physicsActive === undefined) {
             physicsActive = true;
         }
-        if (boxy === undefined) {
-            boxy = true;
+        if (movable === undefined) {
+            movable = true;
         }
         // Step 1: Setup scene graph entry for rendering
         let box = {
@@ -256,7 +258,7 @@ function Particles() {
         this.scene.children.push(box);
         box.isSpinned = isSpinned;
         box.physicsActive = physicsActive;
-        box.boxy = boxy;
+        box.movable = movable;
 
         if (physicsActive)
         {
@@ -288,7 +290,7 @@ function Particles() {
         return box;
     }
 
-    this.addMeshAsBox = function(filename, pos, scale, velocity, mass, restitution, material, isSpinned, boxy, physicsActive, rotation, isHidden) {
+    this.addMeshAsBox = function(filename, pos, scale, velocity, mass, restitution, material, isSpinned, movable, physicsActive, rotation, isHidden) {
         if (material === undefined) {
             material = "default";
         }
@@ -304,8 +306,8 @@ function Particles() {
         if (physicsActive === undefined) {
             physicsActive = true;
         }
-        if (boxy === undefined) {
-            boxy = true;
+        if (movable === undefined) {
+            movable = true;
         }
         // Step 1: Setup scene graph entry for rendering
         let box = {
@@ -333,7 +335,7 @@ function Particles() {
         this.scene.children.push(box);
         box.isSpinned = isSpinned;
         box.physicsActive = physicsActive;
-        box.boxy = boxy;
+        box.movable = movable;
 
         if (physicsActive)
         {
@@ -774,7 +776,7 @@ function Particles() {
     }
 
     this.keyDown = function(evt) {
-        for (key of [KEY_W, KEY_S, KEY_D, KEY_A, KEY_R]) {
+        for (key of [KEY_W, KEY_S, KEY_D, KEY_A, KEY_R, KEY_E, KEY_SPACE]) {
             if (evt.keyCode == key) {
                 this.keysDown[key] = true;
             }
@@ -782,7 +784,7 @@ function Particles() {
     }
 
     this.keyUp = function(evt) {
-        for (key of [KEY_W, KEY_S, KEY_D, KEY_A, KEY_R]) {
+        for (key of [KEY_W, KEY_S, KEY_D, KEY_A, KEY_R, KEY_E, KEY_SPACE]) {
             if (evt.keyCode == key) {
                 this.keysDown[key] = false;
             }
@@ -790,29 +792,29 @@ function Particles() {
     }  
 
     this.makeClick = function(evt) {
-        //let clickType = "LEFT";
-        //evt.preventDefault();
-        // if (evt.which) {
-        //     if (evt.which == 3) clickType = "RIGHT";
-        //     if (evt.which == 2) clickType = "MIDDLE";
-        // }
-        // else if (evt.button) {
-        //     if (evt.button == 2) clickType = "RIGHT";
-        //     if (evt.button == 4) clickType = "MIDDLE";
-        // }
-        // if (clickType == "RIGHT") {
-        //     let pos = vec3.create();
-        //     let res = this.getCameraVectors();
-        //     let T = res['T']; // Towards vector
-        //     let U = res['U']; // Up vector
-        //     vec3.scaleAndAdd(pos, this.glcanvas.camera.pos, U, 0);
-        //     vec3.scaleAndAdd(pos, pos, T, 2);
-        //     let sphere = this.addSphere(pos, 0.2, [0, 0, 0], 1, 0.5, "blueambient");
-        //     // Velocity is 40 units / second in the camera's towards direction
-        //     vec3.scale(T, T, 40); 
-        //     sphere.body.setLinearVelocity(new Ammo.btVector3(T[0], T[1], T[2]));
-        //     this.glcanvas.parseNode(sphere);
-        // }
+        let clickType = "LEFT";
+        evt.preventDefault();
+        if (evt.which) {
+            if (evt.which == 3) clickType = "RIGHT";
+            if (evt.which == 2) clickType = "MIDDLE";
+        }
+        else if (evt.button) {
+            if (evt.button == 2) clickType = "RIGHT";
+            if (evt.button == 4) clickType = "MIDDLE";
+        }
+        if (clickType == "RIGHT") {
+            let pos = vec3.create();
+            let res = this.getCameraVectors();
+            let T = res['T']; // Towards vector
+            let U = res['U']; // Up vector
+            vec3.scaleAndAdd(pos, this.glcanvas.camera.pos, U, 0);
+            vec3.scaleAndAdd(pos, pos, T, 2);
+            let sphere = this.addSphere(pos, 0.2, [0, 0, 0], 1, 0.5, "blueambient");
+            // Velocity is 40 units / second in the camera's towards direction
+            vec3.scale(T, T, 40); 
+            sphere.body.setLinearVelocity(new Ammo.btVector3(T[0], T[1], T[2]));
+            this.glcanvas.parseNode(sphere);
+        }
     }
 
     this.setupListeners = function() {
@@ -848,41 +850,25 @@ function Particles() {
         this.dynamicsWorld.stepSimulation(dt, 10);
         for (shape of this.scene.children) {
             if (shape.physicsActive) {
-                // let checl = vec3.create();
-                // checl = vec3.fromValues(5, 0, 0);
-                // if (vec3.equals(shape.pos, checl) == true)
-                // {
-                //     console.log("Here is");
-                //     let v = vec3.create();
-                //     vec3.copy(v, shape.pos);
-                //     //v[0] += 60*Math.cos(this.time);
-                //     v[2] += 20;
-                //     //v[1] += 40*Math.cos(this.time);
-                //     mat4.translate(shape.transform, mat4.create(), v);
-                // }
                 let trans = shape.ptransform;
                 shape.body.getMotionState().getWorldTransform(trans);
                 updateTransformation(shape);
                 if (shape.isTank)
                 {
-                    let v = vec3.create();
-                    vec3.copy(v, shape.pos);
-                    //v[0] += 60*Math.cos(this.time);
-                    v[2] += 35*Math.sin(this.time*0.5);
-                    //v[1] += 40*Math.cos(this.time);
-                    mat4.translate(shape.transform, mat4.create(), v);
-                    trans.setOrigin(new Ammo.btVector3(v));
+                    let moveX = 0;
+                    moveX = 30*Math.cos(this.time);
+                    shape.body.setLinearVelocity(new Ammo.btVector3(0, 0, moveX));
                 }
-                // if (shape.boxy) {
-                //     let mrot = mat4.create();
-                //         mat4.fromYRotation(mrot, dt*6);
-                //         mat4.multiply(shape.transform, shape.transform, mrot);
-                // }
-                // else {
-                //     let trans = shape.ptransform;
-                //     shape.body.getMotionState().getWorldTransform(trans);
-                //     updateTransformation(shape);
-                // }
+                if (shape.movable) {
+                    let moveX = 0;
+                    let moveY = 0;
+                    moveX = 20*(Math.cos(this.time*0.5)+Math.sin(this.time*0.5));
+                    moveY = 5*(Math.cos(this.time*0.5)+Math.sin(this.time*0.5));
+                    //shape.body.setLinearVelocity(new Ammo.btVector3(moveX, 0.17, 0));
+                    shape.body.setLinearVelocity(new Ammo.btVector3(moveX, 0, 0));
+                }
+                // let v = vec3.create();
+                // vec3.copy(v, shape.pos);
             }
             else {
                 if (shape.isLight) {
@@ -922,11 +908,12 @@ function Particles() {
             let res = this.getCameraVectors();
             let T = res['T']; // Towards vector
             let R = res['R']; // Right vector
+            let U = res['U']; // Right vector
             vec3.scale(T, T, 2);
             vec3.scale(R, R, 2);
             if (this.keysDown[KEY_W]) {
                 // Apply a central impulse in the forward direction of the camera
-                this.cow.body.applyCentralImpulse(new Ammo.btVector3(T[0], T[1], T[2]), this.cow.pos);
+                this.cow.body.applyCentralImpulse(new Ammo.btVector3(T[0], T[1], T[2]));
                 //this.tank.body.applyCentralImpulse(new Ammo.btVector3(T[0]*5, T[1]*5, T[2]*5), this.tank.pos);
             }
             if (this.keysDown[KEY_S]) {
@@ -945,10 +932,29 @@ function Particles() {
                 this.cow.body.applyCentralImpulse(new Ammo.btVector3(R[0], R[1], R[2]));
             }
             if (this.keysDown[KEY_R]) {
-                // Apply a central impulse in the left direction of the camera
-                //vec3.add(this.glcanvas.camera.pos, this.cow.pos, vec3.fromValues(0, 3, -2));
-                //vec3.rotateY(this.glcanvas.camera.pos, this.cow.pos, this.cow.pos, 10);
+                // Change camera view to the (0, 25, 0) position.
                 vec3.add(this.glcanvas.camera.pos, this.glight.pos, vec3.fromValues(0, 25, 0)); 
+            }
+            if (this.keysDown[KEY_SPACE]) {
+                // Apply a central impulse in the up direction of the camera
+                let U = vec3.create();
+                vec3.cross(U, R, T);
+                this.cow.body.applyCentralImpulse(new Ammo.btVector3(U[0], U[1], U[2]));
+            }
+            if (this.keysDown[KEY_E]) {
+                // Change camera view to the (0, 25, 0) position.
+                console.log(this.glcanvas.camera.pos);
+                vec3.rotateY(this.glcanvas.camera.pos, R, T, 10); 
+                this.cow.body.applyCentralImpulse(new Ammo.btVector3(T[0], T[1], T[2]));
+                // let mrot = mat4.create();
+                // mat4.fromYRotation(mrot, 1);
+                // console.log(this.glcanvas.camera.pos);
+                // let transform = [1, 0, 0, T, 
+                //          0, 1, 0, U,
+                //          0, 0, 1, R,
+                //          0, 0, 0, 1];
+                // mat4.multiply(transform, transform, mrot);
+                console.log(this.glcanvas.camera.pos);
             }
         }
     }

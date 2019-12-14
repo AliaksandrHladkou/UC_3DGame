@@ -116,8 +116,8 @@
 
     function initTanks() {
         //adding tanks
-        particles.tank = particles.addMesh("ggslac/meshes/d/MC1.off", [-10, 1, -10], [1.5, 1.5, 1.5], [0, 0, 0], 50, 0, "green");
-        particles.tank = particles.addMesh("ggslac/meshes/d/MC1.off", [-15, 1, -10], [1.5, 1.5, 1.5], [0, 0, 0], 50, 0, "green", false, false, rotateMesh(0), false, true, true);
+        particles.tank = particles.addMesh("ggslac/meshes/d/MC1.off", [-10, 1, 30], [2, 2, 2], [0, 0, 0], 10, 0, "blueambient", false, false, rotateMesh(0), false, true, true);
+        particles.tank = particles.addMesh("ggslac/meshes/d/MC1.off", [-15, 1, 30], [2, 2, 2], [0, 0, 0], 50, 0, "green", false, false, rotateMesh(0), false, true, true);
         //particles.tank = particles.addMesh("ggslac/meshes/d/M1A1.off", [-20, 0.5, -10], [1.5, 1.5, 1.5], [0, 0, 0], 0, 0, "green");
         //particles.tank = particles.addMesh("ggslac//meshes/d/maus.off", [10, 0.5, -15], [1, 1, 1], [0, 0, 0], 0, 0, "green", false, false, rotateNeg45);
     }
@@ -167,7 +167,7 @@
         //First scene
         let posof = vec3.create();
         posof = vec3.fromValues(10, 50, 100);
-        particles.addNewBox(posof, [50, 1, 50], [0, 0, 0], 0, 0.9, "ground", false, true, true, rotateMesh(45), true);
+        particles.addNewBox(posof, [50, 1, 50], [0, 0, 0], 0, 0.9, "ground", false, false, true, rotateMesh(45), true);
         particles.addBox(posof, [50, 1, 2], [0, 0, 0], 0, 0.9, "ground", rotateMesh(45));
         // particles.addBox([-30, 50.5, 95], [50, 1, 2], [0, 0, 0], 0, 0.9, "ground", rotateMesh(45));
         particles.addBox(posof, [2, 1, 50], [0, 0, 0], 0, 0.9, "ground", rotateMesh(225));
@@ -205,6 +205,15 @@
         initTopObjects();
     }
 
+    function initLastScene() {
+        particles.addNewBox([200, 10, 0], [50, 1, 50], [0, 0, 0], 0, 0.9, "ground", false, false, true, rotateMesh(0, 0, 10), false);
+        particles.addNewBox([250, 14.5, 0], [51, 1, 50], [0, 0, 0], 0, 0.9, "ground", false, false, true, rotateMesh(0, 0, 0), false);
+    }
+
+    function initMoving() {
+        particles.addNewBox([150, 12, -5], [20, 0.2, 10], [0, 0, 0], 1000, 0, "goldish", false, true, true, rotateMesh(0));
+        //particles.addMesh("ggslac/meshes/d/w_box.off", [0, 55, 0], [3, 3, 3], [0, 0, 0], 15, 0, "goldish", false, false);
+    }
     function initSky() {
         //Initializing the sky with planets and moons.
         particles.addSphere([150, 60, 250], 45, [0, 0, 0], 0, 0, "blueambient", false, false, true);
@@ -238,13 +247,18 @@
 
     function init() {
         initBase();
-        // initTopscene();
-        // initHouseMeshes();
-        // initTanks();
-        // initFences();
-        // initContainers();
-        // initAdds();
-        // initSky();
+        initTopscene();
+        // particles.addNewBox([80, 5, -50], [20, 0.2, 10], [0, 0, 0], 1000, 0, "goldish", false, true, true, rotateMesh(0));
+        // particles.addMesh("ggslac/meshes/d/sliding.off", [0, 1, 0], [1, 1, 1], [0, 0, 0], 5, 0.8, "goldish");
+        // particles.addMesh("ggslac/meshes/d/w_box.off", [3, 5, 0], [3, 3, 3], [0, 0, 0], 15, 0, "goldish", false, false);
+        // initLastScene();
+        // initMoving();
+        initHouseMeshes();
+        initTanks();
+        initFences();
+        initContainers();
+        initAdds();
+        initSky();
     }
 
     init();
@@ -252,7 +266,8 @@
     //particles.knife = particles.addMesh("ggslac/meshes/d/knife.off", [1, 2, 5], [1, 1, 1], [0, 0, 0], 0, 0, "green", false, false, rotateNeg45);
 
     //particles.cow = particles.addMesh("ggslac/meshes/box.off", [0, 1, 0], [0, 0, 0], 10, 1, "green");
-    particles.cow = particles.addMesh("ggslac/meshes/d/MC1.off", [0, 70, 110], [1, 1, 1], [0, 0, 0], 10, 0, "green", false, false, rotateMesh(180));
+    particles.cow = particles.addMesh("ggslac/meshes/d/MC1.off", [0, 60, 110], [1, 1, 1], [0, 0, 0], 10, 0, "green", false, false, rotateMesh(180));
+    //particles.cow = particles.addSphere([32, 55, 100], 1, [0, 0, 0], 10, 0, "blueambient", true, false, true);
 
     glcanvas.setupScene(particles.scene, glcanvas.clientWidth, glcanvas.clientHeight);
     glcanvas.drawEdges = false;
