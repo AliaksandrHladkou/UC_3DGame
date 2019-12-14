@@ -16,7 +16,7 @@ const KEY_C = 67;
 
 const KEY_R = 82;
 const KEY_E = 69;
-const KEY_SPACE = 32;
+const KEY_SPACE = 16;
 
 /**
  * Update the glMatrix transform field of a shape based on 
@@ -384,7 +384,7 @@ function Particles() {
      * 
      * @returns {object} The created sphere object
      */
-    this.addSphere = function(pos, radius, velocity, mass, restitution, material, isLight, isHidden, physicsActive) {
+    this.addSphere = function(pos, radius, velocity, mass, restitution, material, isLight, isHidden, physicsActive, isGlight) {
         if (material === undefined) {
             material = "default";
         }
@@ -396,6 +396,9 @@ function Particles() {
         }
         if (physicsActive === undefined) {
             physicsActive = true;
+        }
+        if (isGlight === undefined) {
+            isGlight = false;
         }
 
         // Step 1: Setup scene graph entry for rendering
@@ -417,6 +420,7 @@ function Particles() {
         }
         this.scene.children.push(sphere);
         sphere.isLight = isLight;
+        sphere.isGlight = isGlight;
         if (isLight) {
             // If it is a light, need to also add it to the list of lights
             sphere.color = this.scene.materials[material].kd;
@@ -832,9 +836,6 @@ function Particles() {
         //this.glcanvas.addEventListener('mousemove', mouse_monitor);
         //this.glcanvas.motion('mousemove', mouse_monitor);
     }
-
-
-
     /**
      * Step forward in time in the physics simulation.
      * Then, for each rigid body object in the scene, read out
@@ -855,9 +856,9 @@ function Particles() {
                 updateTransformation(shape);
                 if (shape.isTank)
                 {
-                    let moveX = 0;
-                    moveX = 30*Math.cos(this.time);
-                    shape.body.setLinearVelocity(new Ammo.btVector3(0, 0, moveX));
+                    let moveZ = 0;
+                    moveZ = 30*Math.cos(this.time);
+                    shape.body.setLinearVelocity(new Ammo.btVector3(0, 0, moveZ));
                 }
                 if (shape.movable) {
                     let moveX = 0;
@@ -867,6 +868,17 @@ function Particles() {
                     //shape.body.setLinearVelocity(new Ammo.btVector3(moveX, 0.17, 0));
                     shape.body.setLinearVelocity(new Ammo.btVector3(moveX, 0, 0));
                 }
+                if (shape.isGlight) {
+                    let moveX = 0;
+                    let moveY = 0;
+                    let moveZ = 0;
+                    moveX += 50*(Math.cos(this.time)+Math.sin(this.time));
+                    moveY = 0*(Math.cos(this.time)+Math.sin(this.time));
+                    moveZ = 20*(Math.cos(this.time)+Math.sin(this.time));
+                    shape.body.setLinearVelocity(new Ammo.btVector3(moveX, moveY, moveZ));
+                    shape.atten = [5, 0, 0];
+                }
+                
                 // let v = vec3.create();
                 // vec3.copy(v, shape.pos);
             }
@@ -892,7 +904,7 @@ function Particles() {
                 // }
                 else {
                     let mrot = mat4.create();
-                    mat4.fromYRotation(mrot, dt);
+                    mat4.fromYRotation(mrot, dt*6);
                     mat4.multiply(shape.transform, shape.transform, mrot);
                     //console.log("radius" + shape.radius);
                     //shape.radius = 50;
@@ -909,8 +921,9 @@ function Particles() {
             let T = res['T']; // Towards vector
             let R = res['R']; // Right vector
             let U = res['U']; // Right vector
-            vec3.scale(T, T, 2);
-            vec3.scale(R, R, 2);
+            vec3.scale(T, T, 5);
+            vec3.scale(R, R, 5);
+            vec3.scale(U, U, 6);
             if (this.keysDown[KEY_W]) {
                 // Apply a central impulse in the forward direction of the camera
                 this.cow.body.applyCentralImpulse(new Ammo.btVector3(T[0], T[1], T[2]));
@@ -937,15 +950,17 @@ function Particles() {
             }
             if (this.keysDown[KEY_SPACE]) {
                 // Apply a central impulse in the up direction of the camera
-                let U = vec3.create();
-                vec3.cross(U, R, T);
+                // let U = vec3.create();
+                // vec3.cross(U, R, T);
                 this.cow.body.applyCentralImpulse(new Ammo.btVector3(U[0], U[1], U[2]));
             }
             if (this.keysDown[KEY_E]) {
                 // Change camera view to the (0, 25, 0) position.
                 console.log(this.glcanvas.camera.pos);
-                vec3.rotateY(this.glcanvas.camera.pos, R, T, 10); 
-                this.cow.body.applyCentralImpulse(new Ammo.btVector3(T[0], T[1], T[2]));
+                vec3.add(this.glcanvas.camera.pos, this.cow.pos, vec3.fromValues(0, 5, 10)); 
+                // vec3.rotateY(this.glcanvas.camera.pos, R, T, 10); 
+                // this.cow.body.applyCentralImpulse(new Ammo.btVector3(T[0], T[1], T[2]));
+
                 // let mrot = mat4.create();
                 // mat4.fromYRotation(mrot, 1);
                 // console.log(this.glcanvas.camera.pos);

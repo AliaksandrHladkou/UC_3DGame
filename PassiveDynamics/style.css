@@ -1,0 +1,30 @@
+body {
+    background-color: #1F1E1E;
+    color: #DED8D8;
+  }
+h3 {
+    text-align: center;
+}
+p 
+{
+    font-family: "Times New Roman", Times, serif;
+}
+.button {
+    background-color: #8A0806;
+    border: none;
+    color: #DED8D8;
+    padding: 10px 25px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 20px;
+    margin: 4px 2px;
+    cursor: pointer;
+    -webkit-transition-duration: 0.4s;
+    transition-duration: 0.4s;
+  }
+  .button:hover {
+    background-color: #028A0A;
+    box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19); 
+    color: white;
+  }
