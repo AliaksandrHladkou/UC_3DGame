@@ -290,83 +290,6 @@ function Particles() {
         return box;
     }
 
-    this.addMeshAsBox = function(filename, pos, scale, velocity, mass, restitution, material, isSpinned, movable, physicsActive, rotation, isHidden) {
-        if (material === undefined) {
-            material = "default";
-        }
-        if (rotation === undefined) {
-            rotation = [0, 0, 0, 1];
-        }
-        if (isHidden === undefined) {
-            isHidden = false;
-        }
-        if (isSpinned === undefined) {
-            isSpinned = false;
-        }
-        if (physicsActive === undefined) {
-            physicsActive = true;
-        }
-        if (movable === undefined) {
-            movable = true;
-        }
-        // Step 1: Setup scene graph entry for rendering
-        let box = {
-            "scale":scale,
-            "pos":pos,
-            "velocity":velocity,
-            "mass":mass,
-            "transform":[scale[0], 0, 0, pos[0], 
-                         0, scale[1], 0, pos[1],
-                         0, 0, scale[2], pos[2],
-                         0, 0, 0, 1],
-            "shapes":[
-                {
-                "type":"mesh",
-                "material":material,
-                "hidden":isHidden,
-                "filename": filename
-                }
-                // "type": "scene",
-                // "filename": "../ggslac/scenes/boxes.json",
-                // "material": material,
-                // "hidden": isHidden}
-            ]
-        }
-        this.scene.children.push(box);
-        box.isSpinned = isSpinned;
-        box.physicsActive = physicsActive;
-        box.movable = movable;
-
-        if (physicsActive)
-        {
-            const boxShape = new Ammo.btBoxShape(new Ammo.btVector3(scale[0]/2, scale[1]/2, scale[2]/2));
-            const ptransform = new Ammo.btTransform();
-            ptransform.setIdentity();
-            ptransform.setOrigin(new Ammo.btVector3(pos[0], pos[1], pos[2]));	
-            ptransform.setRotation(new Ammo.btQuaternion(rotation[0], rotation[1], rotation[2], rotation[3]));
-            box.ptransform = ptransform; 
-            updateTransformation(box);
-            const isDynamic = (mass != 0);
-            let localInertia = null;
-            if (isDynamic) {
-                localInertia = new Ammo.btVector3(velocity[0], velocity[1], velocity[2]);
-                boxShape.calculateLocalInertia(mass,localInertia);
-            }
-            else {
-                localInertia = new Ammo.btVector3(0, 0, 0);
-            }
-            let motionState = new Ammo.btDefaultMotionState(ptransform);
-            let rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, boxShape, localInertia);
-            // The final rigid body object
-            box.body = new Ammo.btRigidBody(rbInfo);
-            box.body.setRestitution(restitution);
-            // Finally, add the rigid body to the simulator
-            this.dynamicsWorld.addRigidBody(box.body);
-            box.physicsActive = true;
-        }
-        return box;
-    }
-    
     /**
      * Add a sphere to the scene by both creating an entry in the scene graph
      * and initializing information for the physics engine
@@ -499,7 +422,6 @@ function Particles() {
      * @param {boolean} isLight Should it also be emitting light?
      * * @param {quat4} rotation rotate object
      */
-    //this.addMesh = function(filename, pos, velocity, mass, restitution, material, isLight, isHidden) {
     this.addMesh = function(filename, pos, scale, velocity, mass, restitution, material, isLight, isHidden, rotation, isSpinned, physicsActive, isTank) {
         if (isTank === undefined) {
             isTank = false;
@@ -696,24 +618,58 @@ function Particles() {
         return shape;
     }
 
-    this.initFenceX = function(mesh, initPosX, initPosY, initPosZ, scale, n, interval, mass, rotation) {
+    /**
+     * Add fences by moving Z axis.
+     * 
+     * @param {filename} mesh what fence to init
+     * @param {vec3} pos the initial possition to start init fences.
+     * @param {vec3} scale How to rescale the mesh along each axis
+     * @param {int} n number of fences to init
+     * @param {int} interval between fences (from center to center btwn fences)
+     * @param {float} mass Mass of the sphere
+     * @param {quat4} rotation rotate object
+     */
+    this.initFenceX = function(mesh, pos, scale, n, interval, mass, rotation) {
 
         for (let i = 1; i <= n; i++)
         {
-            let pos = [initPosX + (i*interval), initPosY, initPosZ];
+            pos = [pos[0] + (interval), pos[1], pos[2]];
             this.addMesh(mesh, pos, scale, [0, 0, 0], mass, 0, "goldish", false, false, rotation);
         }
     }
 
-    this.initFenceZ = function(mesh, initPosX, initPosY, initPosZ, scale, n, interval, mass, rotation) {
+    /**
+     * Add fences by moving Z axis.
+     * 
+     * @param {filename} mesh what fence to init
+     * @param {vec3} pos the initial possition to start init fences.
+     * @param {vec3} scale How to rescale the mesh along each axis
+     * @param {int} n number of fences to init
+     * @param {int} interval between fences (from center to center btwn fences)
+     * @param {float} mass Mass of the sphere
+     * @param {quat4} rotation rotate object
+     */
+    this.initFenceZ = function(mesh, pos, scale, n, interval, mass, rotation) {
 
         for (let i = 1; i <= n; i++)
         {
-            let pos = [initPosX, initPosY, initPosZ + (i*interval)];
+            pos = [pos[0], pos[1], pos[2] + (interval)];
             this.addMesh(mesh, pos, scale, [0, 0, 0], mass, 0, "goldish", false, false, rotation);
         }
     }
 
+    /**
+     * Add fences by moving both on X and Z axis.
+     * 
+     * @param {filename} mesh what fence to init
+     * @param {vec3} pos the initial possition to start init fences.
+     * @param {vec3} scale How to rescale the mesh along each axis
+     * @param {int} n number of fences to init
+     * @param {vec3} interval between fences (from center to center btwn fences)
+     * @param {float} mass Mass of the sphere
+     * @param {quat4} rotation rotate object
+     * @param {boolean} negative helps to define the direction to init
+     */
     this.initFenceXZ = function(mesh, pos, scale, n, interval, mass, rotation, negative) {
         if (negative === undefined)
         {
@@ -725,9 +681,13 @@ function Particles() {
             pos = [pos[0] + (interval[0]), pos[1], pos[2] + (interval[1])];
             this.addMesh(mesh, pos, scale, [0, 0, 0], mass, 0, "goldish", false, false, rotation);
         }
-        console.log("position: " + pos);
     }
 
+    /**
+     * Add light spheres with initial position. All other parameteres also assumed to be predefined.
+     * 
+     * @param {int} n number of initialized spheres.
+     */
     this.initSpheresXZ = function(n) {
         for (i = 0; i < n; i++)
         {
@@ -741,6 +701,8 @@ function Particles() {
     /**
      * Add boxes with a random initial position, dimensions, initial velocity, mass,
      * coefficient of restitution, and orientation
+     * 
+     * @param {int} N number of randomely initialized boxes
      */
     this.randomlyInitBoxes = function(N) {
         for (let i = 0; i < N; i++) {
@@ -755,14 +717,16 @@ function Particles() {
         }
     }
 
+    /**
+     * Add wooden boxes with dimensions, initial velocity, mass,
+     * coefficient of restitution, material, and orientation
+     *
+     * @param {vec3} pos initial position for initializing boxes
+     * @param {int} N number of randomely initialized boxes
+     */
     this.randomlyInitWoodenBoxes = function(pos, N) {
         for (let i = 0; i < N; i++) {
-            //mesh = "ggslac/meshes/d/w_box.off";
             pos = [pos[0] + Math.random()*10, pos[1] + Math.random()*20, pos[2] + Math.random()*10];
-            //let scale = [0.5*Math.random(), 0.5*Math.random(), 0.5*Math.random()];
-            //let velocity = [Math.random()*0.1, Math.random()*0.1, Math.random()*0.1];
-            //const mass = Math.random();
-            //const restitution = Math.random();
             let rotation = vec4.create();
             vec4.random(rotation, 1);
             this.addMesh("ggslac/meshes/d/w_box.off", pos, [3, 3, 3], [0, 0, 0], 20, 0, "goldish", false, false, rotation);
@@ -867,36 +831,26 @@ function Particles() {
         this.dynamicsWorld.stepSimulation(dt, 10);
         for (shape of this.scene.children) {
             if (shape.physicsActive) {
-                let trans = shape.ptransform;
-                shape.body.getMotionState().getWorldTransform(trans);
-                updateTransformation(shape);
                 if (shape.isTank)
                 {
                     let moveZ = 0;
-                    moveZ = 30*Math.cos(this.time);
+                    moveZ = 22*(Math.cos(this.time*0.9) + Math.sin(this.time*0.9));
                     shape.body.setLinearVelocity(new Ammo.btVector3(0, 0, moveZ));
                 }
                 if (shape.movable) {
-                    let moveX = 0;
-                    let moveY = 0;
-                    moveX = 20*(Math.cos(this.time*0.5)+Math.sin(this.time*0.5));
-                    moveY = 5*(Math.cos(this.time*0.5)+Math.sin(this.time*0.5));
-                    //shape.body.setLinearVelocity(new Ammo.btVector3(moveX, 0.17, 0));
-                    shape.body.setLinearVelocity(new Ammo.btVector3(moveX, 0, 0));
+                    // let moveX = 0;
+                    // let moveY = 0;
+                    let moxeZ = 0;
+                    // moveX = 10*(Math.cos(this.time*0.5)+Math.sin(this.time*0.5));
+                    // moveY = 10*(Math.cos(this.time*0.5)+Math.sin(this.time*0.5));
+                    moveZ = 10*(Math.cos(this.time*0.5)+Math.sin(this.time*0.7));
+                    // console.log(Math.cos(this.time*0.5));
+                    
+                    shape.body.setLinearVelocity(new Ammo.btVector3(0, 0, moveZ));
                 }
-                // if (shape.heavy) {
-                //     let moveX = 0;
-                //     let moveY = 0;
-                //     let moveZ = 0;
-                //     moveX += 50*(Math.cos(this.time)+Math.sin(this.time));
-                //     moveY = 0*(Math.cos(this.time)+Math.sin(this.time));
-                //     moveZ = 20*(Math.cos(this.time)+Math.sin(this.time));
-                //     shape.body.setLinearVelocity(new Ammo.btVector3(moveX, moveY, moveZ));
-                //     shape.atten = [5, 0, 0];
-                // }
-                
-                // let v = vec3.create();
-                // vec3.copy(v, shape.pos);
+                let trans = shape.ptransform;
+                shape.body.getMotionState().getWorldTransform(trans);
+                updateTransformation(shape);
             }
             else {
                 if (shape.isLight) {
@@ -908,22 +862,11 @@ function Particles() {
                     mat4.translate(shape.transform, mat4.create(), v);
                     shape.radius = 20*Math.random();
                     shape.atten = [5, 0, 0];
-                    //mat4.rotateZ(shape.transform, shape.transform, 60);
                 }
-                // else if (shape.isSpinned)
-                // {
-                //     let v = vec3.create();
-                //     vec3.copy(v, shape.pos);
-                //     v[0] += 5*Math.cos(6*this.time);
-                //     v[2] += 5*Math.sin(6*this.time);
-                //     mat4.translate(shape.transform, mat4.create(), v);
-                // }
                 else {
                     let mrot = mat4.create();
                     mat4.fromYRotation(mrot, dt*6);
                     mat4.multiply(shape.transform, shape.transform, mrot);
-                    //console.log("radius" + shape.radius);
-                    //shape.radius = 50;
                 }
             }
         }
@@ -943,7 +886,6 @@ function Particles() {
             if (this.keysDown[KEY_W]) {
                 // Apply a central impulse in the forward direction of the camera
                 this.cow.body.applyCentralImpulse(new Ammo.btVector3(T[0], T[1], T[2]));
-                //this.tank.body.applyCentralImpulse(new Ammo.btVector3(T[0]*5, T[1]*5, T[2]*5), this.tank.pos);
             }
             if (this.keysDown[KEY_S]) {
                 // Apply a central impulse in the reverse direction of the camera
@@ -953,7 +895,6 @@ function Particles() {
             if (this.keysDown[KEY_D]) {
                 // Apply a central impulse in the right direction of the camera
                 this.cow.body.applyCentralImpulse(new Ammo.btVector3(R[0], R[1], R[2]));
-                //this.cow.body.applyImpulse(new Ammo.btVector3(T[0], T[1], T[2]), vec3.add(this.glcanvas.camera.pos, this.cow.pos, vec3.fromValues(0, 0, -2)));
             }
             if (this.keysDown[KEY_A]) {
                 // Apply a central impulse in the left direction of the camera
