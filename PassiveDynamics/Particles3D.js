@@ -384,7 +384,7 @@ function Particles() {
      * 
      * @returns {object} The created sphere object
      */
-    this.addSphere = function(pos, radius, velocity, mass, restitution, material, isLight, isHidden, physicsActive, isGlight) {
+    this.addSphere = function(pos, radius, velocity, mass, restitution, material, isLight, isHidden, physicsActive, heavy) {
         if (material === undefined) {
             material = "default";
         }
@@ -397,8 +397,8 @@ function Particles() {
         if (physicsActive === undefined) {
             physicsActive = true;
         }
-        if (isGlight === undefined) {
-            isGlight = false;
+        if (heavy === undefined) {
+            heavy = false;
         }
 
         // Step 1: Setup scene graph entry for rendering
@@ -420,11 +420,18 @@ function Particles() {
         }
         this.scene.children.push(sphere);
         sphere.isLight = isLight;
-        sphere.isGlight = isGlight;
+        sphere.heavy = heavy;
         if (isLight) {
             // If it is a light, need to also add it to the list of lights
             sphere.color = this.scene.materials[material].kd;
-            sphere.atten = [2, 0, 0];
+            if (heavy)
+            {
+                sphere.atten = [9, 0, 0];
+            }  
+            else
+            {
+                sphere.atten = [3, 0, 0];
+            }
             this.scene.lights.push(sphere);
         }
         
@@ -721,6 +728,15 @@ function Particles() {
         console.log("position: " + pos);
     }
 
+    this.initSpheresXZ = function(n) {
+        for (i = 0; i < n; i++)
+        {
+            for (k = 0; k < n; k++)
+            {
+                this.addSphere([-70+i*3, 0.3, 50+k*3], 0.3, [0, 0, 0], 100, 0.0, "redambient", true, false, true, true);
+            }
+        }
+    }
 
     /**
      * Add boxes with a random initial position, dimensions, initial velocity, mass,
@@ -868,16 +884,16 @@ function Particles() {
                     //shape.body.setLinearVelocity(new Ammo.btVector3(moveX, 0.17, 0));
                     shape.body.setLinearVelocity(new Ammo.btVector3(moveX, 0, 0));
                 }
-                if (shape.isGlight) {
-                    let moveX = 0;
-                    let moveY = 0;
-                    let moveZ = 0;
-                    moveX += 50*(Math.cos(this.time)+Math.sin(this.time));
-                    moveY = 0*(Math.cos(this.time)+Math.sin(this.time));
-                    moveZ = 20*(Math.cos(this.time)+Math.sin(this.time));
-                    shape.body.setLinearVelocity(new Ammo.btVector3(moveX, moveY, moveZ));
-                    shape.atten = [5, 0, 0];
-                }
+                // if (shape.heavy) {
+                //     let moveX = 0;
+                //     let moveY = 0;
+                //     let moveZ = 0;
+                //     moveX += 50*(Math.cos(this.time)+Math.sin(this.time));
+                //     moveY = 0*(Math.cos(this.time)+Math.sin(this.time));
+                //     moveZ = 20*(Math.cos(this.time)+Math.sin(this.time));
+                //     shape.body.setLinearVelocity(new Ammo.btVector3(moveX, moveY, moveZ));
+                //     shape.atten = [5, 0, 0];
+                // }
                 
                 // let v = vec3.create();
                 // vec3.copy(v, shape.pos);
